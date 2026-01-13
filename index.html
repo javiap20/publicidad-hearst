@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hub de Facturación - Publicidad</title>
+<style>
+    :root {
+        --bg: #020617;
+        --card: #111827;
+        --digital: #38bdf8;
+        --print: #f59e0b;
+        --text: #e5e7eb;
+        --border: #374151;
+        --tooltip-bg: #1f2937;
+    }
+    
+    body {
+        margin: 0;
+        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        background: radial-gradient(circle at top, #0f172a, #020617);
+        color: var(--text);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        overflow-x: hidden;
+    }
+
+    h1 { 
+        margin-bottom: 10px; 
+        font-size: 2.2em; 
+        text-align: center;
+        background: linear-gradient(to right, #38bdf8, #f59e0b);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    p.subtitle {
+        margin-bottom: 40px;
+        opacity: 0.7;
+        font-size: 1.1em;
+    }
+
+    .hub-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+        gap: 30px;
+        max-width: 1000px;
+        width: 95%;
+    }
+
+    .section-card {
+        background: var(--card);
+        padding: 40px 30px;
+        border-radius: 24px;
+        border: 1px solid var(--border);
+        text-align: center;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+
+    .section-card h2 { 
+        margin-top: 0; 
+        font-size: 1.5em;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .digital-h2 { color: var(--digital); }
+    .print-h2 { color: var(--print); }
+    
+    .btn-group { 
+        display: flex; 
+        flex-direction: column; 
+        gap: 12px; 
+    }
+    
+    .btn-container {
+        position: relative;
+        display: flex;
+    }
+
+    .btn {
+        flex: 1;
+        padding: 16px;
+        border-radius: 12px;
+        text-decoration: none;
+        color: white;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        background: rgba(31, 41, 55, 0.5);
+        border: 1px solid transparent;
+        text-align: center;
+    }
+
+    .btn-digital:hover { 
+        background: rgba(56, 189, 248, 0.1);
+        border-color: var(--digital);
+        color: var(--digital);
+    }
+
+    .btn-print:hover { 
+        background: rgba(245, 158, 11, 0.1);
+        border-color: var(--print);
+        color: var(--print);
+    }
+
+    /* TOOLTIP BASE */
+    .tooltip {
+        visibility: hidden;
+        position: absolute;
+        z-index: 100;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 320px;
+        background-color: var(--tooltip-bg);
+        color: var(--text);
+        text-align: left;
+        padding: 20px;
+        border-radius: 15px;
+        border: 1px solid var(--border);
+        box-shadow: 10px 10px 30px rgba(0,0,0,0.5);
+        opacity: 0;
+        transition: opacity 0.3s, visibility 0.3s;
+        pointer-events: none;
+        font-size: 0.85em;
+        line-height: 1.5;
+    }
+
+    /* Derecha para Digital */
+    .btn-digital-cont .tooltip { left: 105%; }
+    .btn-digital-cont .tooltip::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        right: 100%;
+        margin-top: -8px;
+        border-width: 8px;
+        border-style: solid;
+        border-color: transparent var(--border) transparent transparent;
+    }
+
+    /* Izquierda para Print */
+    .btn-print-cont .tooltip { right: 105%; }
+    .btn-print-cont .tooltip::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 100%;
+        margin-top: -8px;
+        border-width: 8px;
+        border-style: solid;
+        border-color: transparent transparent transparent var(--border);
+    }
+
+    .tooltip h3 { margin: 0 0 10px 0; font-size: 1.1em; color: #fff; border-bottom: 1px solid #374151; padding-bottom: 5px;}
+    .tooltip ul { margin: 0; padding: 0; list-style: none; }
+    .tooltip li { margin-bottom: 8px; padding-left: 15px; position: relative; }
+    .tooltip li::before { content: "•"; position: absolute; left: 0; font-weight: bold; }
+    
+    .btn-digital-cont .tooltip li::before { color: var(--digital); }
+    .btn-print-cont .tooltip li::before { color: var(--print); }
+
+    .btn-container:hover .tooltip { visibility: visible; opacity: 1; }
+
+    .footer-status { margin-top: 60px; font-size: 0.85em; opacity: 0.4; letter-spacing: 1px; }
+</style>
+</head>
+<body>
+
+    <h1>Panel de Control</h1>
+    <p class="subtitle">Selecciona un área de análisis</p>
+
+    <div class="hub-container">
+        <div class="section-card">
+            <h2 class="digital-h2">🌐 DIGITAL</h2>
+            <div class="btn-group">
+                
+                <div class="btn-container btn-digital-cont">
+                    <a href="digital-datos-graficos.html" target="_blank" class="btn btn-digital">Datos Genéricos</a>
+                    <div class="tooltip">
+                        <h3>¿Qué información obtengo?</h3>
+                        <ul>
+                            <li><strong>Facturación Total:</strong> Ingresos netos y comparativa porcentual (%) entre periodos.</li>
+                            <li><strong>Ingresos por Categorías:</strong> Rendimiento de Sites, Áreas, Sectores y Familias.</li>
+                            <li><strong>Detalle de Productos:</strong> Análisis específico de Sponsorship y Redes Sociales.</li>
+                            <li><strong>Ranking Comercial:</strong> Productividad individual de cada comercial.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="btn-container btn-digital-cont">
+                    <a href="digital-facturacion-desglosada.html" target="_blank" class="btn btn-digital">Desglose de la Facturación (+ Gráficos)</a>
+                    <div class="tooltip">
+                        <h3>¿Qué información obtengo?</h3>
+                        <ul>
+                            <li><strong>Facturación Total:</strong> Ingresos netos y comparativa porcentual (%) entre periodos.</li>
+                            <li><strong>Presupuestos medios:</strong> Comparativa porcentual (%) entre periodos.</li>
+                            <li><strong>Tendencia Temporal:</strong> Evolución mensual mediante 4 gráficos: Líneas, Barras, Áreas acumuladas y Barras apiladas.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="btn-container btn-digital-cont">
+                    <a href="digital-facturacion-por-anunciante.html" target="_blank" class="btn btn-digital">Facturación por Anunciante</a>
+                    <div class="tooltip">
+                        <h3>¿Qué información obtengo?</h3>
+                        <ul>
+                            <li><strong>Perfil del Anunciante:</strong> Resumen detallado de la actividad de un cliente específico. Incluye en qué meses invierte, qué publicaciones prefiere, qué productos compra y qué comercial le atiende...</li>
+                            <li><strong>Ranking de Inversión:</strong> Listado de anunciantes ordenados de mayor a menor facturación.</li>
+                        </ul>
+                    </div>
+                </div>
+
+
+                <div class="btn-container btn-digital-cont">
+                    <a href="digital-facturacion-por-anunciante-y-marca.html" target="_blank" class="btn btn-digital">Facturación por Marca</a>
+                    <div class="tooltip">
+                        <h3>¿Qué información obtengo?</h3>
+                        <ul>
+                            <li><strong>Facturación Total:</strong> Ingresos netos y comparativa porcentual (%) entre periodos.</li>
+                            <li><strong>Desglose de productos publicitarios </strong>por cada una de las marcas de un anunciante.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="btn-container btn-digital-cont">
+                    <a href="digital-totales-familas-productos.html" target="_blank" class="btn btn-digital">Análisis de Productos Seleccionados</a>
+                    <div class="tooltip">
+                        <h3>¿Qué información obtengo?</h3>
+                        <ul>
+                            <li><strong>Facturación Total:</strong> Ingresos netos y comparativa porcentual (%) entre periodos.</li>
+                            <li><strong>Presupuestos medios:</strong> Comparativa porcentual (%) entre periodos.</li>
+                        </ul>
+                    </div>
+                </div>
+
+
+                
+
+
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2 class="print-h2">📰 PRINT</h2>
+            <div class="btn-group">
+                
+                <div class="btn-container btn-print-cont">
+                    <a href="print-datos-graficos.html" target="_blank" class="btn btn-print">Datos Genéricos</a>
+                    <div class="tooltip">
+                        <h3>¿Qué información obtengo?</h3>
+                        <ul>
+                            <li><strong>Facturación Total:</strong> Ingresos netos y comparativa porcentual (%) entre periodos.</li>
+                            <li><strong>Ingresos por Categorías:</strong> Rendimiento de por Revistas, Áreas, Sectores y Familias.</li>
+                            <li><strong>Detalle de Productos:</strong> Análisis específico de varios productos en Print.</li>
+                            <li><strong>Ranking Comercial:</strong> Productividad individual de cada comercial.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="btn-container btn-print-cont">
+                    <a href="print-facturacion-desglosada.html" target="_blank" class="btn btn-print">Desglose de la Facturación (+ Gráficos)</a>
+                    <div class="tooltip">
+                        <h3>¿Qué información obtengo?</h3>
+                        <ul>
+                            <li><strong>Facturación Total:</strong> Ingresos netos y comparativa porcentual (%) entre periodos.</li>
+                            <li><strong>Presupuestos medios:</strong> Comparativa porcentual (%) entre periodos.</li>
+                            <li><strong>Tendencia Temporal:</strong> Evolución mensual mediante 4 gráficos: Líneas, Barras, Áreas acumuladas y Barras apiladas.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="btn-container btn-print-cont">
+                    <a href="print-facturacion-por-anunciante.html" target="_blank" class="btn btn-print">Facturación por Anunciante</a>
+                    <div class="tooltip">
+                        <h3>¿Qué información obtengo?</h3>
+                        <ul>
+                            <li><strong>Perfil del Anunciante:</strong> Resumen detallado de la actividad de un cliente específico. Incluye en qué meses invierte, qué publicaciones prefiere, qué productos compra y qué comercial le atiende...</li>
+                            <li><strong>Ranking de Inversión:</strong> Listado de anunciantes ordenados de mayor a menor facturación.</li>
+                        </ul>
+                    </div>
+                </div>
+
+
+<div class="btn-container btn-print-cont">
+                    <a href="print-facturacion-por-anunciante-y-marca.html" target="_blank" class="btn btn-print">Facturación por Marca</a>
+                    <div class="tooltip">
+                        <h3>¿Qué información obtengo?</h3>
+                        <ul>
+                            <li><strong>Facturación Total:</strong> Ingresos netos y comparativa porcentual (%) entre periodos.</li>
+                            <li><strong>Desglose de productos publicitarios </strong>por cada una de las marcas de un anunciante.</li>
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+   
+
+</body>
+</html>
