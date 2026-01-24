@@ -1,0 +1,348 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>Ranking Anunciantes - Facturación</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root {
+  --card: #111827; --text: #e5e7eb; --neg: #f87171; --ok-green: #34d399;
+  --brand-cian: #22d3ee; --total-bg: #fefce8; --total-text: #422006; 
+  --colHighlight: rgba(255, 255, 255, 0.08); 
+  --bg-year-base: #1e293b;
+  --bg-year-comp: #1e293b;
+  --bg-brand: #334155;
+}
+body { margin: 0; font-family: 'Inter', sans-serif; background: #020617; color: var(--text); font-size: 13px; }
+.container { max-width: 1600px; margin: auto; padding: 20px; }
+.card { background: rgba(17,24,39,.9); border-radius: 14px; padding: 15px; margin-bottom: 20px; border: 1px solid #1f2937; }
+
+.filtersRow { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px; }
+.filter-group { 
+    flex: 1; min-width: 300px; padding: 20px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.f-base { background-color: var(--bg-year-base); }
+.f-comp { background-color: var(--bg-year-comp); }
+.f-brand { background-color: var(--bg-brand); }
+
+label { display: block; margin-bottom: 8px; color: #94a3b8; font-size: 11px; text-transform: uppercase; font-weight: bold; }
+select { 
+    background: #0f172a; color: #fff; border: 1px solid #4b5563; padding: 8px; border-radius: 8px; 
+    width: 100%; margin-bottom: 12px; font-size: 12px; cursor: pointer;
+}
+
+.month-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; }
+.chip {
+    padding: 6px 2px; border-radius: 6px; background: rgba(0,0,0,0.4); border: 1px solid #374151;
+    color: #64748b; font-size: 10px; cursor: pointer; text-align: center; transition: 0.2s; text-transform: uppercase;
+}
+.chip.active { background: var(--brand-cian); color: #000; font-weight: bold; border-color: var(--brand-cian); }
+
+.totalBlock { 
+    background: var(--total-bg); color: var(--total-text); padding: 20px; border-radius: 12px; 
+    margin-bottom: 20px; border: 1px solid #fef08a;
+}
+.totalValues { display: flex; justify-content: space-around; align-items: center; text-align: center; }
+.totalValues .value { font-size: 26px; font-weight: 900; display: block; margin-top: 5px; }
+.totalLabels { font-weight: 700; text-transform: uppercase; font-size: 11px; opacity: 0.7; }
+
+.grid-layout { display: grid; grid-template-columns: 350px 200px repeat(4, 1fr); align-items: stretch; }
+.header-row { 
+    background: #1e293b; font-weight: bold; color: #fff; text-transform: uppercase; 
+    font-size: 11px; text-align: center; border-radius: 10px 10px 0 0; border: 1px solid #334155; margin-bottom: 4px;
+}
+.header-row div { padding: 15px; display: flex; align-items: center; justify-content: center; }
+
+.adv-name { 
+    font-weight: 700; color: var(--brand-cian); padding: 0 15px; display: flex; 
+    align-items: center; justify-content: center; text-align: center; background: rgba(0,0,0,0.2); 
+}
+.data-cell { text-align: center; padding: 12px 10px; display: flex; flex-direction: column; justify-content: center; border-left: 1px solid rgba(255,255,255,0.03); }
+.col-main { background-color: var(--colHighlight); border-left: 1px solid rgba(255,255,255,0.1) !important; border-right: 1px solid rgba(255,255,255,0.1) !important; }
+
+.v-val-main { font-size: 14px; font-weight: 800; color: #fff; }
+.v-val { font-weight: 700; font-size: 12px; }
+.trend-line { font-size: 11px; font-weight: 600; display: flex; justify-content: center; gap: 5px; margin-top: 4px; }
+.pos { color: var(--ok-green); }
+.neg { color: var(--neg); }
+
+h1, .subtitle { text-align: center; }
+</style>
+</head>
+<body>
+
+<h1>Ranking de Anunciantes - TOTAL HEARST</h1>
+<p class="subtitle">
+  Desglose (de mayor a menor facturación) de los anunciantes que han tenido activaciones en los años seleccionados <br>
+  <em>(la facturación programática de esos anunciantes está incluida en Google. No hay desglose en el apartado programática)</em>
+</p>
+
+<div class="container">
+    <div class="card">
+        <label>Cargar Archivo Excel</label>
+        <input type="file" id="fileInput" accept=".xlsx">
+    </div>
+
+    <div id="mainUI" style="display:none">
+        <div class="filtersRow">
+            <div class="filter-group f-base">
+                <label>Año Base</label>
+                <select id="fYear1"></select>
+                <div id="months1" class="month-grid"></div>
+            </div>
+            <div class="filter-group f-comp">
+                <label>Año Comparar</label>
+                <select id="fYear2"></select>
+                <div id="months2" class="month-grid"></div>
+            </div>
+            <div class="filter-group f-brand">
+                <label>Marca Unificada</label>
+                <select id="fPub" style="margin-top: 5px;"></select>
+                <label style="margin-top: 10px;">Área</label>
+                <select id="fArea"></select>
+            </div>
+        </div>
+
+        <div id="resultsContent" style="display:none">
+            <div class="totalBlock">
+                <div class="totalValues">
+                    <div>
+                        <span class="totalLabels">Total</span> <span id="y1Lab"></span>
+                        <span id="totalV1" class="value">0€</span>
+                    </div>
+                    <div id="totalVar" style="text-align:center;"></div>
+                    <div>
+                        <span class="totalLabels">Total</span> <span id="y2Lab"></span>
+                        <span id="totalV2" class="value">0€</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="header-row grid-layout">
+                <div>Anunciantes (por orden de fact.)</div>
+                <div class="col-main">Facturación Total</div>
+                <div>Eventos</div>
+                <div>Print</div>
+                <div>Digital</div>
+                <div>Prog.</div>
+            </div>
+            <div id="renderContainer" class="card" style="padding:0; border-top:none; border-radius: 0 0 14px 14px;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+let rawData = [];
+const MESES = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
+let selM1 = new Set(), selM2 = new Set(); 
+
+const PUB_MAP = {
+    "CAR & DRIVER": "Car & Driver", "WWW.CARANDDRIVER.COM/ES/": "Car & Driver",
+    "COSMOPOLITAN": "Cosmopolitan", "WWW.COSMOPOLITAN.COM/ES/": "Cosmopolitan",
+    "DIEZ MINUTOS": "Diez Minutos", "WWW.DIEZMINUTOS.ES": "Diez Minutos",
+    "ELLE": "Elle", "WWW.ELLE.COM/ES/": "Elle",
+    "ELLE DECORATION": "Elle Decoration", "WWW.ELLEDECOR.COM/ES/": "Elle Decoration",
+    "ELLE GOURMET": "Elle Gourmet",
+    "ESQUIRE": "Esquire", "WWW.ESQUIRE.COM/ES/": "Esquire",
+    "FOTOGRAMAS & VIDEO": "Fotogramas", "WWW.FOTOGRAMAS.ES": "Fotogramas",
+    "HARPER´S BAZAAR": "Harper's Bazaar", "WWW.HARPERSBAZAAR.COM/ES": "Harper's Bazaar",
+    "MEN´S HEALTH": "Men's Health", "WWW.MENSHEALTH.COM/ES": "Men's Health",
+    "NUEVO ESTILO": "Nuevo Estilo", "WWW.NUEVO-ESTILO.ES": "Nuevo Estilo",
+    "RUNNER´S WORLD": "Runner's World", "WWW.RUNNERSWORLD.COM/ES/": "Runner's World",
+    "WOMEN´S HEALTH": "Women's Health", "WWW.WOMENSHEALTHMAG.COM/ES/": "Women's Health",
+    "WWW.MICASAREVISTA.COM": "MiCasa"
+};
+
+// ======= LISTAS DE PRODUCTOS =======
+// DIGITAL (lista completa que nos pasaste)
+const DIGITAL_PRODUCTS = [
+  "ARTICLE (PRODUCTION COST)",
+  "ARTICLE TRANSLATED",
+  "BRANDED CONTENT",
+  "BRANDED CONTENT SINDICATED",
+  "BRANDED CONTENT VIDEO",
+  "CONTENT COLLECTION",
+  "CURATED",
+  "DESTACADOS EDITORIALES",
+  "DISPLAY CO-BRANDED",
+  "DISPLAY STANDARD FORMATO GRANDE",
+  "DISPLAY STANDARD FORMATO PEQUEÑO",
+  "DISPLAY STANDARD MIX FORMATOS",
+  "EDITORIAL NATIVE",
+  "FIRST IMPRESSION",
+  "HERO",
+  "INSTAGRAM (ORGÁNICO)",
+  "INSTAGRAM (SPONSORED POST)",
+  "MPU (AMP)",
+  "PHOTO GALLERY INTEGRATED",
+  "PODCAST PARA ANUNCIANTES",
+  "PRE-ROLL ON PLATFORM",
+  "REDES SOCIALES ORGANICAS",
+  "SHARE AD POST",
+  "SPONSORED NEWSLETTER",
+  "STORY TELLER",
+  "STORY TELLER (SPONSORED POST)",
+  "SUPER HERO",
+  "SUPER HERO PREMIUM",
+  "TAKE OVER PREMIUM",
+  "TAKE OVER STANDARD",
+  "TIK TOK (ORGÁNICO)",
+  "TIK TOK (SPONSORED POST)",
+  "VARIOS REDES SOCIALES",
+  "VARIOS REDES SOCIALES (SPONSORED POST)"
+].map(x => x.toUpperCase());
+
+// PRINT (igual que en tu versión anterior, incluyendo "Varios")
+const PRINT_PRODUCTS = [
+  "1 PAGINA","1/2 PAGINA","1/3 PAGINA","1ª DOBLE PAGINA","1ª PAGINA IMPAR","1ª PAGINA PAR",
+  "2ª DOBLE PAGINA","2ª PAGINA IMPAR","2ª PAGINA PAR","3ª DOBLE PAGINA","3ª PAGINA IMPAR","3ª PAGINA PAR",
+  "4ª DOBLE PAGINA","5ª DOBLE PAGINA","6ª DOBLE PAGINA","BEST PRODUCT","CARGO PUBLICIDAD","CONTRAPORTADA",
+  "COSTES CURATED","COSTES FABRICACION PRODUCCION","COSTES REALIZACION","CURATED (MULTIFORMATO)","DOBLE PAGINA",
+  "DOBLE PAGINA 1º TERCIO","ENCARTE","INTERIOR 1 PAGINA","INTERIOR 2 PAGINAS","INTERIOR 4 PAGINAS",
+  "INTERIOR CONTRAPORTADA","INTERIOR PORTADA","PAGINA","PAGINA 1º TERCIO","PAGINA IMPAR DE 4º A 11ª",
+  "PORTADA 2 PAGINAS","PORTADA 3 PAGINAS","PORTADA 4 PAGINAS","PRODUCTO EN PORTADA","SACHETTE","TARJETAS PROMOCIONALES",
+  "VARIOS"
+].map(x => x.toUpperCase());
+
+const DIGITAL_SET = new Set(DIGITAL_PRODUCTS);
+const PRINT_SET   = new Set(PRINT_PRODUCTS);
+// ===================================
+
+function fmt(n) { return Math.round(n || 0).toLocaleString('de-DE') + "€"; }
+
+function createMonthChips(containerId, set) {
+    const cont = document.getElementById(containerId);
+    cont.innerHTML = "";
+    MESES.forEach(m => {
+        const c = document.createElement("div");
+        c.className = "chip"; 
+        c.innerText = m.substring(0,3);
+        c.onclick = () => {
+            c.classList.toggle("active");
+            set.has(m) ? set.delete(m) : set.add(m);
+            render();
+        };
+        cont.appendChild(c);
+    });
+}
+
+fileInput.onchange = e => {
+    const r = new FileReader();
+    r.onload = ev => {
+        const wb = XLSX.read(new Uint8Array(ev.target.result), {type:"array"});
+        const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
+        
+        rawData = json.map(d => {
+            const fam = String(d["Familia"] || "").toUpperCase();
+            const pub = String(d["Publicación"] || d["PUBLICACION"] || "").trim().toUpperCase();
+            const mesStr = String(d["Mes inserción"] || d["MES_INSERCION"] || "").toUpperCase();
+            const mesEncontrado = MESES.find(m => mesStr.includes(m)) || "OTROS";
+
+            const producto = String(d["Producto"] || d["PRODUCTO"] || "").trim().toUpperCase();
+
+            return {
+                ingreso: Number(String(d["Imp.Neto a Comisionar"] || 0).replace(/[^0-9.-]+/g,"")) || 0,
+                Año: String(d["Año inserción"] || d["ANNO_INSERCION"] || "").trim(),
+                Mes: mesEncontrado,
+                Anunciante: String(d["Anunciante"] || d["ANUNCIANTE"] || "SIN NOMBRE").trim().toUpperCase(),
+                Publi: PUB_MAP[pub] || pub,
+                Area: String(d["ÁREA"] || d["AREA"] || d["área"] || d["area"] || "SIN ÁREA").trim().toUpperCase(),
+                // Eventos y Programática por FAMILIA (sin cambios)
+                isEvent: fam === "EVENTOS",
+                isProg: fam.includes("PROG"),
+                // PRINT y DIGITAL por PRODUCTO; excluimos PROG para evitar solapes
+                isPrint: PRINT_SET.has(producto) && !fam.includes("PROG"),
+                isDigital: DIGITAL_SET.has(producto) && !fam.includes("PROG")
+            };
+        }).filter(d => d.Año !== "" && d.Publi !== "BOOK");
+
+        const years = [...new Set(rawData.map(d => d.Año))].sort().reverse();
+        fYear1.innerHTML = `<option value="">Elige un año</option>` + years.map(y => `<option>${y}</option>`).join("");
+        fYear2.innerHTML = `<option value="">Año a comparar</option>` + years.map(y => `<option>${y}</option>`).join("");
+
+        const pubs = [...new Set(rawData.map(d => d.Publi))].sort();
+        fPub.innerHTML = `<option value="TODOS">Todas las Marcas</option>` + pubs.map(p => `<option>${p}</option>`).join("");
+
+        const areas = [...new Set(rawData.map(d => d.Area))].sort();
+        fArea.innerHTML = `<option value="TODOS">Todas las Áreas</option>` + areas.map(a => `<option>${a}</option>`).join("");
+
+        createMonthChips("months1", selM1);
+        createMonthChips("months2", selM2);
+        document.getElementById("mainUI").style.display = "block";
+        document.getElementById("resultsContent").style.display = "none";
+    };
+    r.readAsArrayBuffer(e.target.files[0]);
+};
+
+function render() {
+    const y1 = fYear1.value, y2 = fYear2.value, pF = fPub.value, aF = fArea.value;
+    
+    if (!y1 || !y2) {
+        document.getElementById("resultsContent").style.display = "none";
+        return;
+    }
+
+    document.getElementById("resultsContent").style.display = "block";
+    y1Lab.innerText = y1; y2Lab.innerText = y2;
+    const ads = {};
+
+    rawData.forEach(d => {
+        if (pF !== "TODOS" && d.Publi !== pF) return;
+        if (aF !== "TODOS" && d.Area !== aF) return;
+        const passM1 = selM1.size === 0 || selM1.has(d.Mes);
+        const passM2 = selM2.size === 0 || selM2.has(d.Mes);
+
+        let target = null;
+        if (d.Año === y1 && passM1) target = "y1";
+        else if (d.Año === y2 && passM2) target = "y2";
+        
+        if (!target) return;
+
+        if (!ads[d.Anunciante]) ads[d.Anunciante] = { y1:0, y2:0, ev1:0, ev2:0, pr1:0, pr2:0, di1:0, di2:0, pg1:0, pg2:0 };
+        const a = ads[d.Anunciante];
+        
+        if (target === "y1") {
+            a.y1 += d.ingreso;
+            if(d.isEvent)   a.ev1 += d.ingreso;
+            if(d.isPrint)   a.pr1 += d.ingreso;
+            if(d.isDigital) a.di1 += d.ingreso;
+            if(d.isProg)    a.pg1 += d.ingreso;
+        } else {
+            a.y2 += d.ingreso;
+            if(d.isEvent)   a.ev2 += d.ingreso;
+            if(d.isPrint)   a.pr2 += d.ingreso;
+            if(d.isDigital) a.di2 += d.ingreso;
+            if(d.isProg)    a.pg2 += d.ingreso; // FIX mantenido
+        }
+    });
+
+    const sorted = Object.keys(ads).map(k => ({name:k, ...ads[k]})).sort((a,b) => b.y1 - a.y1);
+    let s1 = 0, s2 = 0; sorted.forEach(x => { s1 += x.y1; s2 += x.y2; });
+    totalV1.innerText = fmt(s1); totalV2.innerText = fmt(s2);
+    
+    const diff = s1 - s2, perc = s2 ? (diff/s2)*100 : 0;
+    totalVar.innerHTML = `<span style="font-size:32px; font-weight:900;" class="${diff>=0?'pos':'neg'}">${diff>=0?'+':''}${perc.toFixed(0)}%</span><br><span style="font-weight:700" class="${diff>=0?'pos':'neg'}">(${diff>=0?'+':''}${fmt(diff)})</span>`;
+
+    renderContainer.innerHTML = sorted.map(a => `
+        <div class="row-item grid-layout">
+            <div class="adv-name">${a.name}</div>
+            <div class="data-cell col-main"><span class="v-val-main">${fmt(a.y1)}</span>${getTrendHTML(a.y1, a.y2)}</div>
+            <div class="data-cell"><span class="v-val">${fmt(a.ev1)}</span>${getTrendHTML(a.ev1, a.ev2)}</div>
+            <div class="data-cell"><span class="v-val">${fmt(a.pr1)}</span>${getTrendHTML(a.pr1, a.pr2)}</div>
+            <div class="data-cell"><span class="v-val">${fmt(a.di1)}</span>${getTrendHTML(a.di1, a.di2)}</div>
+            <div class="data-cell"><span class="v-val">${fmt(a.pg1)}</span>${getTrendHTML(a.pg1, a.pg2)}</div>
+        </div>`).join("");
+}
+
+function getTrendHTML(v1, v2) {
+    if(!v2 || v2 === 0) return `<div class="trend-line"><span style="color:#64748b">—</span></div>`;
+    const d = v1 - v2, p = (d/v2)*100;
+    const cl = d >= 0 ? 'pos' : 'neg';
+    return `<div class="trend-line"><span class="${cl}">${d>=0?'+':''}${p.toFixed(0)}%</span> <span class="${cl}" style="font-weight:400">(${d>=0?'+':''}${fmt(d)})</span></div>`;
+}
+
+fYear1.onchange = fYear2.onchange = fPub.onchange = fArea.onchange = render;
+</script>
+</body>
+</html>

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Propuesta Hearst</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<style>
+/* Interfaz de usuario original */
+:root { --bg-dark: #020617; --card-bg: #111827; --text-main: #e5e7eb; --accent: #db2777; --Hearst-blue: #2563eb; --danger: #ef4444; }
+body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-dark); color: var(--text-main); padding: 20px; }
+.container { max-width: 1300px; margin: auto; }
+.card { background: var(--card-bg); border-radius: 12px; padding: 25px; border: 1px solid #1f2937; margin-bottom: 20px; }
+h1 { color: #fff; text-align: center; margin-bottom: 30px; }
+label { display: block; margin-bottom: 8px; font-weight: bold; color: #94a3b8; font-size: 0.85rem; }
+select, input { background: #1f2937; color: #fff; border: 1px solid #374151; padding: 10px; border-radius: 6px; width: 100%; box-sizing: border-box; margin-bottom: 5px; }
+.config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; align-items: end; }
+.propuesta-bloque { background: #fff; border-radius: 8px; margin-top: 30px; padding: 15px; border-left: 5px solid var(--accent); position: relative; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+.propuesta-bloque h3 { color: #000; margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 8px; font-size: 1.1rem; }
+.btn-del-mini { position: absolute; top: 15px; right: 15px; background: var(--danger); color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 12px; }
+table { width: 100%; border-collapse: collapse; color: #000; font-size: 11px; margin-bottom: 10px; }
+th { background: #000; color: #fff; padding: 10px; text-align: left; border: 1px solid #333; text-transform: uppercase; }
+td { border: 1px solid #e5e7eb; padding: 8px; text-align: center; vertical-align: middle; white-space: pre-line; }
+.resumen-global { background: #1e293b; border-radius: 12px; padding: 20px; margin-top: 30px; border: 2px solid var(--Hearst-blue); display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; }
+.resumen-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+.resumen-valor { font-size: 1.25rem; color: #fff; font-weight: 800; }
+.btn { padding: 12px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; border: none; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px; }
+.btn-add { background: var(--Hearst-blue); color: white; width: 100%; justify-content: center; }
+.btn-export { background: var(--accent); color: white; flex: 2; justify-content: center; }
+.btn-pdf { background: #10b981; color: white; flex: 1; justify-content: center; }
+.btn-clear { background: #4b5563; color: white; flex: 1; justify-content: center; }
+.footer-actions { display: flex; gap: 15px; margin-top: 20px; }
+.empty-state { text-align: center; color: #4b5563; padding: 40px; border: 2px dashed #1f2937; border-radius: 12px; margin-top: 20px; }
+.notas-pie { color: #4b5563; font-size: 10px; margin-top: 10px; font-style: italic; border-top: 1px solid #eee; padding-top: 10px; white-space: pre-line; }
+.aviso-comercial { color: #fbbf24; font-size: 10px; font-weight: normal; margin-top: 4px; min-height: 12px; font-style: italic; }
+
+/* CONFIGURACIÓN QUIRÚRGICA DEL PDF */
+@media print {
+    h1, .card, .btn-del-mini, .footer-actions, .empty-state { display: none !important; }
+    body { background: white !important; color: black !important; padding: 0 !important; }
+    .container { max-width: 100% !important; margin: 0 !important; }
+    .propuesta-bloque { border: 1px solid #eee !important; box-shadow: none !important; page-break-inside: avoid; margin-top: 20px !important; }
+    .resumen-global { background: #f8fafc !important; border: 1px solid #000 !important; color: #000 !important; grid-template-columns: 1fr 1fr 1fr !important; }
+    .resumen-valor { color: #000 !important; }
+    .resumen-label { color: #64748b !important; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>Propuesta Publicitaria Hearst</h1>
+    <div class="card">
+        <div class="config-grid">
+            <div>
+                <label>Tipo de Propuesta:</label>
+                <select id="tipoPropuesta" onchange="actualizarInterfazConfig()">
+                    <option value="bcd">1. Branded Content Digital</option>
+                    <option value="bcvd">2. Branded Content Vídeo Digital</option>
+                    <option value="print">3. Página Print</option>
+                    <option value="social">4. Campaña Social Paid</option>
+                    <option value="storyteller">5. Social Paid Storyteller</option>
+                    <option value="display">6. Campaña Display</option>
+                    <option value="display_story">7. Display Storyteller</option>
+                    <option value="preroll">8. Campaña Preroll</option>
+                </select>
+            </div>
+            <div>
+                <label id="labelSoporte">Soporte/Revista:</label>
+                <select id="siteSelect" onchange="verificarOtro()"></select>
+                <input type="text" id="siteManual" placeholder="Nombre personalizado..." style="display:none; margin-top:10px;">
+            </div>
+            <div id="wrapperGarantizado" style="display:none">
+                <label>Impresiones (Garantizado):</label>
+                <select id="garantizadoImps">
+                    <option value="100000">100.000</option><option value="200000">200.000</option><option value="300000">300.000</option><option value="400000">400.000</option><option value="500000">500.000</option><option value="600000">600.000</option><option value="700000">700.000</option><option value="800000">800.000</option><option value="900000">900.000</option><option value="1000000">1.000.000</option>
+                </select>
+            </div>
+            <div id="wrapperDesc">
+                <label>Descuento Manual (%):</label>
+                <input type="number" id="descManual" value="0" step="0.5" min="0" oninput="comprobarLimitesComerciales()">
+                <div id="msgAvisoDesc" class="aviso-comercial"></div>
+            </div>
+            <div id="wrapperCPM" style="display:none">
+                <label>CPM (€):</label>
+                <input type="number" id="cpmManual" value="12" step="0.1" min="0" oninput="comprobarLimitesComerciales()">
+                <div id="msgAvisoCPM" class="aviso-comercial"></div>
+            </div>
+            <div><button class="btn btn-add" onclick="agregarPropuestaAlListado()">➕ Añadir Propuesta</button></div>
+        </div>
+    </div>
+    <div id="listadoPropuestas"><div class="empty-state">No hay propuestas añadidas todavía.</div></div>
+    <div id="areaTotales" style="display:none;">
+        <div class="resumen-global">
+            <div class="resumen-item"><div class="resumen-label">Total Impresiones / VV</div><div id="totalImps" class="resumen-valor">0</div></div>
+            <div class="resumen-item"><div class="resumen-label">Total CTC</div><div id="totalCTC" class="resumen-valor">0</div></div>
+            <div class="resumen-item"><div class="resumen-label">Total Neto</div><div id="totalNeto" class="resumen-valor">0 €</div></div>
+        </div>
+        <div class="footer-actions">
+            <button class="btn btn-clear" onclick="limpiarTodo()">🗑️ Limpiar</button>
+            <button class="btn btn-pdf" onclick="window.print()">📄 Generar PDF</button>
+            <button class="btn btn-export" onclick="exportarTodoExcel()">📥 Exportar Excel Premium</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const dbPrecios = { "bcd": { "elle.es": 12000, "harper's bazaar.es": 10000, "cosmopolitan.es": 10000, "diez minutos.es": 7000, "elle gourmet.es": 8000, "elle decor.es": 7000, "nuevo estilo.es": 7000, "esquire.es": 10000, "fotogramas.es": 8000, "car and driver.es": 7000, "men's health.es": 8000, "women's health.es": 8000, "runner's world.es": 7000 }, "bcvd": { "elle.es": 15000, "harper's bazaar.es": 12000, "cosmopolitan.es": 12000, "diez minutos.es": 9000, "elle gourmet.es": 10000, "elle decor.es": 9000, "nuevo estilo.es": 9000, "esquire.es": 12000, "fotogramas.es": 10000, "car and driver.es": 9000, "men's health.es": 10000, "women's health.es": 10000, "runner's world.es": 9000 } };
+const multSites = { "elle.es": { m1: 20, m2: 25 }, "harper's bazaar.es": { m1: 15, m2: 40 }, "cosmopolitan.es": { m1: 7, m2: 40 }, "diez minutos.es": { m1: 20, m2: 40 }, "elle gourmet.es": { m1: 20, m2: 30 }, "elle decor.es": { m1: 12, m2: 40 }, "nuevo estilo.es": { m1: 10, m2: 40 }, "esquire.es": { m1: 12, m2: 45 }, "fotogramas.es": { m1: 15, m2: 40 }, "car and driver.es": { m1: 7, m2: 40 }, "men's health.es": { m1: 7, m2: 45 }, "women's health.es": { m1: 7, m2: 40 }, "runner's world.es": { m1: 7, m2: 40 } };
+const dbPrint = { "ELLE": { lectores: 917000, precio: 10000 }, "HARPER'S BAZAAR": { lectores: 372000, precio: 6000 }, "COSMOPOLITAN": { lectores: 1250000, precio: 6000 }, "DIEZ MINUTOS": { lectores: 589000, precio: 3000 }, "ELLE GOURMET": { lectores: 200000, precio: 4000 }, "ELLE DECOR": { lectores: 567000, precio: 5000 }, "NUEVO ESTILO": { lectores: 494000, precio: 5000 }, "ESQUIRE": { lectores: 166000, precio: 6000 }, "FOTOGRAMAS": { lectores: 658000, precio: 4000 }, "CAR AND DRIVER": { lectores: 373000, precio: 3000 }, "MEN'S HEALTH": { lectores: 470000, precio: 4000 }, "RUNNER'S WORLD": { lectores: 368000, precio: 2000 } };
+const dbDisplay = { "CIRCUITO FEMENINAS PREMIUM": "Elle, Harper's Bazaar y Cosmopolitan", "CIRCUITO FEMENINAS": "Elle, Bazaar, Cosmopolitan y Diez Minutos", "CIRCUITO DECO": "Elle Decor y Nuevo Estilo", "CIRCUITO MASCULINO HEARST": "Esquire, Fotogramas y Car and driver", "CIRCUITO HEALTHY": "Men's Health, Women's Health y Runner's World" };
+
+function formatNumber(num) { return new Intl.NumberFormat('de-DE').format(num); }
+function redondearComercial(valor, tipo) { return tipo === "ctc" ? Math.round(valor / 100) * 100 : Math.round(valor / 10000) * 10000; }
+
+function calcularTotalesPropuesta() {
+    let sNeto = 0, sImps = 0, sCTC = 0;
+    document.querySelectorAll(".propuesta-bloque").forEach(b => {
+        b.querySelectorAll("table tbody tr").forEach(f => {
+            const c = f.querySelectorAll("td");
+            // Lógica para detectar qué sumar (Imps o CTC)
+            const kpi = c.length === 8 ? c[5].innerText.toLowerCase() : c[2].innerText.toLowerCase();
+            const garant = c.length === 8 ? c[6].innerText : c[3].innerText;
+            const val = parseInt(garant.replace(/\./g, "")) || 0;
+
+            if (kpi.includes("content") || kpi.includes("ctc")) sCTC += val;
+            else if (kpi.includes("impresiones") || kpi.includes("visuali") || kpi.includes("lectores")) sImps += val;
+
+            // Suma del Neto (solo si la celda tiene €)
+            for(let i=0; i < c.length; i++){
+                if(c[i].innerText.includes("€")) {
+                    sNeto += parseFloat(c[i].innerText.replace(" €", "").replace(/\./g, "").replace(",", ".")) || 0;
+                }
+            }
+        });
+    });
+    document.getElementById("totalNeto").innerText = formatNumber(sNeto) + " €";
+    document.getElementById("totalImps").innerText = formatNumber(sImps);
+    document.getElementById("totalCTC").innerText = formatNumber(sCTC);
+    document.getElementById("areaTotales").style.display = document.querySelectorAll(".propuesta-bloque").length > 0 ? "block" : "none";
+}
+
+function comprobarLimitesComerciales() {
+    const sel = document.getElementById("tipoPropuesta").value;
+    const desc = parseFloat(document.getElementById("descManual").value) || 0;
+    const cpm = parseFloat(document.getElementById("cpmManual").value) || 0;
+    const msgDesc = document.getElementById("msgAvisoDesc");
+    const msgCPM = document.getElementById("msgAvisoCPM");
+    msgDesc.innerText = ""; msgCPM.innerText = "";
+    if (sel === "bcd" && desc > 25) msgDesc.innerText = "⚠️ Excede el descuento máximo recomendado (25%)";
+    if (sel === "bcvd" && desc > 20) msgDesc.innerText = "⚠️ Excede el descuento máximo recomendado (20%)";
+    if (sel === "print" && desc > 20) msgDesc.innerText = "⚠️ Excede el descuento máximo recomendado (20%)";
+    if (["social", "preroll"].includes(sel) && cpm < 12) msgCPM.innerText = "⚠️ Tarifa por debajo del CPM mínimo (12€)";
+    if (sel === "storyteller" && cpm < 8) msgCPM.innerText = "⚠️ Tarifa por debajo del CPM mínimo (8€)";
+    if (sel === "display_story" && cpm < 6) msgCPM.innerText = "⚠️ Tarifa por debajo del CPM mínimo (6€)";
+    if (sel === "display" && cpm < 10) msgCPM.innerText = "⚠️ Tarifa por debajo del CPM mínimo (10€)";
+}
+
+function actualizarInterfazConfig() {
+    const sel = document.getElementById("tipoPropuesta").value;
+    const cpm = document.getElementById("cpmManual"); const imp = document.getElementById("garantizadoImps");
+    if(["social", "preroll"].includes(sel)) cpm.value = 12; else if(sel === "storyteller") cpm.value = 8; else if(sel === "display_story") cpm.value = 6; else cpm.value = 10;
+    if(["social", "storyteller"].includes(sel)) imp.value = "500000"; else if (["display", "display_story", "preroll"].includes(sel)) imp.value = "400000";
+    const esV = ["social", "storyteller", "display", "display_story", "preroll"].includes(sel);
+    document.getElementById("wrapperGarantizado").style.display = esV ? "block" : "none";
+    document.getElementById("wrapperCPM").style.display = esV ? "block" : "none";
+    document.getElementById("wrapperDesc").style.display = esV ? "none" : "block";
+    document.getElementById("labelSoporte").innerText = ["display", "display_story", "preroll"].includes(sel) ? "Circuito:" : "Soporte/Revista:";
+    let l = ["display", "display_story", "preroll"].includes(sel) ? [...Object.keys(dbDisplay), "OTRO"] : (sel === "print" ? Object.keys(dbPrint) : Object.keys(multSites));
+    document.getElementById("siteSelect").innerHTML = l.map(s => `<option value="${s}">${s === "OTRO" ? "OTRO (Manual)" : s}</option>`).join("");
+    comprobarLimitesComerciales();
+}
+
+function agregarPropuestaAlListado() {
+    const list = document.getElementById("listadoPropuestas"); if(list.querySelector('.empty-state')) list.innerHTML = '';
+    const sel = document.getElementById("tipoPropuesta").value; let site = document.getElementById("siteSelect").value;
+    if (site === "OTRO") site = document.getElementById("siteManual").value || "Personalizado";
+    const desc = parseFloat(document.getElementById("descManual").value) || 0; const cpm = parseFloat(document.getElementById("cpmManual").value);
+    const titulo = document.getElementById("tipoPropuesta").options[document.getElementById("tipoPropuesta").selectedIndex].text;
+    const div = document.createElement("div"); div.className = "propuesta-bloque";
+    div.innerHTML = `<button class="btn-del-mini" onclick="eliminarBloque(this)">✖</button><h3>${titulo} - ${site}</h3>`;
+    let tabla = `<table><thead><tr><th>Soporte</th><th>Acción</th><th>Duración</th><th>Formato</th><th>Activ.</th><th>KPI</th><th>Garantizado</th><th>Precio Neto</th></tr></thead><tbody>`;
+    if (["social", "storyteller", "display", "display_story", "preroll"].includes(sel)) {
+        const imps = parseInt(document.getElementById("garantizadoImps").value); const neto = (imps * cpm) / 1000;
+        let acc = ""; let form = "";
+        if(sel === "social") { acc = "Paid Post realizado por Hearst\nFormato a definir en función de las necesidades de la marca (y del brief)\nIncluye enlace a la web del cliente\n(materiales proporcionados por la marca)"; form = "Social paid"; }
+        else if(sel === "storyteller") { acc = "IG Story realizado por Hearst, amplificando la información del BC.\nIncluye un enlace a la web del cliente.\n(materiales proporcionados por la marca)"; form = "Social storyteller"; }
+        else if(sel === "display") { acc = "Creatividad realizada por Hearst\nFormato a definir en función de las necesidades de la marca (y del brief)\nIncluye enlace a la web del cliente\n(materiales proporcionados por la marca)"; form = "Display"; }
+        else if(sel === "display_story") { acc = "Pieza realizada por Hearst, amplificando la información del BC.\nIncluye enlace al contenido y web del cliente.\n(materiales proporcionados por la marca)"; form = "Display storyteller"; }
+        else if(sel === "preroll") { acc = "Campaña PREROLL en los players de vídeo de los sites de Hearst seleccionados."; form = "Preroll**"; }
+        tabla += `<tr><td>${site}</td><td class="text-center">${acc}</td><td>15 días</td><td>${form}</td><td>1</td><td>Impresiones</td><td>${formatNumber(imps)}</td><td>${formatNumber(neto)} €</td></tr></tbody></table>`;
+        if (["display", "display_story", "preroll"].includes(sel)) {
+            let n = dbDisplay[site] ? `* ${site}: ${dbDisplay[site]}` : `* Circuito personalizado`;
+            tabla += `<div class="notas-pie">${n}\n** La campaña Amplificación display y preroll se puede servir vía directa o programática</div>`;
+        }
+    } else if (sel === "print") {
+        const d = dbPrint[site]; const neto = d.precio * (1 - desc/100);
+        tabla += `<tr><td>${site}</td><td>Página advertorial o publicidad (Material facilitado por cliente)</td><td>Nº Revista TBC</td><td>Página</td><td>1</td><td>Lectores</td><td>${formatNumber(d.lectores)}</td><td>${formatNumber(neto)} €</td></tr></tbody></table>`;
+    } else {
+        const neto = dbPrecios[sel][site] * (1 - desc/100); const m = multSites[site]; 
+        let ctc = redondearComercial((sel === "bcvd" ? neto * 0.85 : neto) / 1.1, "ctc");
+        const rows = sel === "bcd" ? 
+            [{a:"Artículo Branded Content Digital con integración de marca y enlace a su site", f:"Branded", k:"Click To Content", g: ctc}, {a:"Tráfico desde destacados editoriales en Home y secciones.", f:"Display", k:"Impresiones", g: redondearComercial(ctc*m.m1, "imp")}, {a:"Post en Facebook e IG story, con enlace al contenido", f:"Social", k:"Impresiones", g: redondearComercial(ctc*m.m2, "imp")}] :
+            [{a:"Artículo Branded Content con Vídeo integrado (Producción Hearst)", f:"Vídeo", k:"Click To Content", g: ctc}, {a:"Tráfico desde destacados editoriales en Home y secciones.", f:"Display", k:"Impresiones", g: redondearComercial(ctc*m.m1, "imp")}, {a:"Amplificación en RRSS (FB + IG Story) con enlace al contenido", f:"Social", k:"Impresiones", g: redondearComercial((ctc*m.m2)+(ctc*5), "imp")}, {a:"RRSS subiendo vídeo nativo (FB)", f:"Social", k:"Visualizaciones", g: redondearComercial(ctc*2.5, "imp")}];
+        rows.forEach((r, i) => { tabla += `<tr>${i===0?`<td rowspan="${rows.length}">${site}</td>`:''}<td>${r.a}</td>${i===0?`<td rowspan="${rows.length}">1 mes</td>`:''}<td>${r.f}</td>${i===0?`<td rowspan="${rows.length}">1</td>`:''}<td>${r.k}</td><td>${formatNumber(r.g)}</td>${i===0?`<td rowspan="${rows.length}">${formatNumber(neto)} €</td>`:''}</tr>`; });
+        tabla += `</tbody></table><div class="notas-pie">* Las Redes Sociales se publicarán de forma orgánica y, eventualmente, se amplificará vía paid (data afín)\n* Las Redes Sociales de los BC de marcas de bebidas alcohólicas tedrán un post orgánico en el feed de FB, segmentado a mayores de 18 años. No se publicará IG Story (META lo prohíbe). En la amplificación paid, si fuese necesariao, el post se viralizará en los feed de FB e IG. Si META no lo permitiera, lo viralizaríamos vía Outbrain (audiencia más afin al soporte Hearst)</div>`;
+    }
+    div.innerHTML += tabla; list.appendChild(div); calcularTotalesPropuesta();
+}
+function eliminarBloque(btn) { btn.parentElement.remove(); if (!document.querySelector(".propuesta-bloque")) document.getElementById("listadoPropuestas").innerHTML = '<div class="empty-state">No hay propuestas.</div>'; calcularTotalesPropuesta(); }
+function limpiarTodo() { if(confirm("¿Borrar todo?")) { document.getElementById("listadoPropuestas").innerHTML = '<div class="empty-state">No hay propuestas.</div>'; calcularTotalesPropuesta(); } }
+function verificarOtro() { document.getElementById("siteManual").style.display = document.getElementById("siteSelect").value === "OTRO" ? "block" : "none"; }
+
+/* EXPORTACIÓN EXCEL */
+async function exportarTodoExcel() {
+    try {
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Propuesta Hearst', { views: [{ showGridLines: false }] });
+        const styleHeaderGris = { font: { bold: true, color: { argb: 'FF000000' } }, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD3D3D3' } }, alignment: { horizontal: 'center', vertical: 'middle' } };
+        const styleTituloBloque = { font: { bold: true, size: 12 }, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F2F2' } } };
+        const styleTotalNegro = { font: { bold: true, color: { argb: 'FFFFFFFF' } }, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF000000' } }, alignment: { horizontal: 'center', vertical: 'middle' } };
+        worksheet.getCell('B2').value = 'HEARST SPAIN';
+        worksheet.getCell('B2').font = { bold: true, size: 14 };
+        worksheet.addRow([]);
+        ['Agencia:', 'Anunciante:', 'Campaña:', 'Att.'].forEach(label => {
+            let row = worksheet.addRow(['', label]);
+            row.getCell(2).font = { bold: true };
+        });
+        worksheet.addRow([]);
+        let optico = worksheet.addRow(['', 'ÓPTICO Y KPIs']);
+        optico.getCell(2).font = { bold: true, size: 13, underline: true };
+        worksheet.addRow([]);
+        let granTotalGarantizado = 0;
+        document.querySelectorAll(".propuesta-bloque").forEach(b => {
+            let titulo = b.querySelector("h3").innerText.toUpperCase();
+            let rowTit = worksheet.addRow(['', titulo]);
+            rowTit.getCell(2).style = styleTituloBloque;
+            worksheet.addRow([]);
+            let headerRow = worksheet.addRow(['', 'SOPORTE', 'ACCIÓN', 'DURACIÓN', 'FORMATO', 'ACTIV.', 'KPI', 'GARANTIZADO', 'PRECIO NETO']);
+            headerRow.height = 20;
+            for(let i=2; i<=9; i++) headerRow.getCell(i).style = styleHeaderGris;
+            b.querySelectorAll("table tbody tr").forEach(tr => {
+                let cells = tr.querySelectorAll("td");
+                let gVal = 0; let pVal = 0; let rData = [];
+                if(cells.length === 8) {
+                    gVal = Number(cells[6].innerText.replace(/\./g, '')) || 0;
+                    pVal = Number(cells[7].innerText.replace(" €", "").replace(/\./g, "").replace(",", ".")) || 0;
+                    granTotalGarantizado += gVal;
+                    rData = ['', cells[0].innerText, cells[1].innerText, cells[2].innerText, cells[3].innerText, cells[4].innerText, cells[5].innerText, gVal, pVal];
+                } else {
+                    gVal = Number(cells[3].innerText.replace(/\./g, '')) || 0;
+                    granTotalGarantizado += gVal;
+                    rData = ['', '', cells[0].innerText, '', cells[1].innerText, '', cells[2].innerText, gVal, ''];
+                }
+                let r = worksheet.addRow(rData);
+                r.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+                r.getCell(3).font = { size: 11 };
+                if(r.getCell(8).value !== '') r.getCell(8).numFmt = '#,##0';
+                if(r.getCell(9).value !== '') r.getCell(9).numFmt = '#,##0" €"';
+            });
+            const notasElem = b.querySelector(".notas-pie");
+            if(notasElem) {
+                const lineas = notasElem.innerText.split('\n');
+                lineas.forEach(linea => {
+                    if(linea.trim() !== "") {
+                        let nRow = worksheet.addRow(['', linea.trim()]);
+                        nRow.getCell(2).font = { italic: true, size: 9, color: { argb: 'FF666666' } };
+                        worksheet.mergeCells(nRow.number, 2, nRow.number, 9);
+                    }
+                });
+            }
+            worksheet.addRow([]);
+        });
+        worksheet.addRow([]);
+        let sNetoFinal = Number(document.getElementById("totalNeto").innerText.replace(" €", "").replace(/\./g, "").replace(",", ".")) || 0;
+        let totalRow = worksheet.addRow(['', 'TOTAL PROPUESTA', '', '', '', '', '', Number(granTotalGarantizado), sNetoFinal]);
+        totalRow.height = 30;
+        [2, 3, 4, 5, 6, 7, 8, 9].forEach(col => { 
+            const cell = totalRow.getCell(col);
+            cell.font = styleTotalNegro.font; cell.fill = styleTotalNegro.fill; cell.alignment = styleTotalNegro.alignment;
+        });
+        totalRow.getCell(8).numFmt = '#,##0';
+        totalRow.getCell(9).numFmt = '#,##0" €"';
+        worksheet.getColumn(1).width = 4;
+        worksheet.getColumn(2).width = 20;
+        worksheet.getColumn(3).width = 70;
+        worksheet.getColumn(4).width = 15;
+        worksheet.getColumn(5).width = 18;
+        worksheet.getColumn(6).width = 8;
+        worksheet.getColumn(7).width = 15;
+        worksheet.getColumn(8).width = 15;
+        worksheet.getColumn(9).width = 15;
+        const buffer = await workbook.xlsx.writeBuffer();
+        saveAs(new Blob([buffer]), "Propuesta_Hearst.xlsx");
+    } catch (e) { alert("Error: " + e.message); }
+}
+actualizarInterfazConfig();
+</script>
+</body>
+</html>
