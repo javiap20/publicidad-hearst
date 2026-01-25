@@ -239,11 +239,14 @@ function agregarPropuestaAlListado() {
   const titulo = document.getElementById("tipoPropuesta").options[document.getElementById("tipoPropuesta").selectedIndex].text;
   const div = document.createElement("div"); div.className = "propuesta-bloque";
   div.innerHTML = `<button class="btn-del-mini" onclick="eliminarBloque(this)">✖</button><h3>${titulo} - ${site}</h3>`;
-  let tabla = `<table><thead><tr><th>Soporte</th><th>Acción</th><th>Duración</th><th>Formato</th><th>Activ.</th><th>KPI</th><th>${sel === 'social_organic' ? 'Alcance Estimado' : 'Garantizado'}</th><th>Precio Neto</th></tr></thead><tbody>`;
+  let tabla = `<table><thead><tr><th>Soporte</th><th>Acción</th><th>Duración</th><th>Formato</th><th>Activ.</th><th>KPI</th><th>${sel === 'social_organic' ? 'Alcance Est. Vídeo' : 'Garantizado'}</th><th>Precio Neto</th></tr></thead><tbody>`;
   
   if (sel === "social_organic") {
     const fmt = document.getElementById("organicFormato").value; const plat = document.getElementById("organicPlataforma").value;
-    let base = dbPrecios.organic[site] || 0; 
+    
+const insiderBase = dbPrecios.organic[site] || 0;  // <-- precio Insider "puro" para ALCANCE
+let base = insiderBase;                             // <-- se seguirá modificando para el PRECIO (plataforma, extras, etc.)
+ 
     if(plat === "IG Reel + TikTok") base *= 2; 
     let extra = 0; let pieExtra = "";
     if(fmt === "Paso a paso") { extra = 350; pieExtra = "* Formato Paso a paso de belleza: Extra 350€ (incluye maquillador). No incluye fee de talent/colaboradora. Ideal si lo pone el cliente."; }
@@ -255,14 +258,14 @@ function agregarPropuestaAlListado() {
     
     if(confirm("¿Será un post colaborativo con la marca? (+1.000€)")) {
       subtotal += 1000;
-      accDetalle += `\nIncluye: Post colaborativo con la marca & Cesión de materiales.`;
+      accDetalle += `\nIncluye: Post colaborativo con la marca.`;
     }
     if(confirm("¿Deseas añadir un Editorial Native? (+50% del subtotal acumulado)")) {
       subtotal *= 1.5;
-      accDetalle += `\nIncluye: Editorial Native (Contenido editorial que acompaña al Social Organic amplificando el mensaje en otro medio).`;
+      accDetalle += `\nIncluye: Editorial Native Extension (Contenido que refuerza el impacto de la pieza social a través de una narrativa más en profundidad en medios afines)`;
     }
 
-    const alcanceEstimado = subtotal * 10;
+    const alcanceEstimado = (insiderBase * 10) * (plat === "IG Reel + TikTok" ? 2 : 1);
     tabla += `<tr><td>${site}</td><td>${accDetalle}</td><td>15 días</td><td>${plat}</td><td>1</td><td>Alcance</td><td>${formatNumber(alcanceEstimado)}</td><td>${formatNumber(subtotal)} €</td></tr></tbody></table>`;
     if(pieExtra) tabla += `<div class="notas-pie">${pieExtra}</div>`;
   } else if (["social", "storyteller", "display", "display_story", "preroll"].includes(sel)) {
