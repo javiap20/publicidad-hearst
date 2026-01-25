@@ -169,7 +169,7 @@ function comprobarLimitesComerciales() {
   msgDesc.innerText = ""; msgCPM.innerText = "";
   if (sel === "bcd" && desc > 25) msgDesc.innerText = "⚠️ Excede el descuento máximo recomendado (25%)";
   if (sel === "bcd_sindicado" && desc > 40) msgDesc.innerText = "⚠️ Excede el descuento máximo recomendado (40%)";
-  if (["bcvd", "print", "social_organic"].includes(sel) && desc > 20) msgDesc.innerText = "⚠️ Excede el descuento máximo recomendado (20%)";
+  if (["bcvd", "print", "social_organic"].includes(sel) && desc > 0) msgDesc.innerText = "⚠️ Excede el descuento máximo recomendado (0%)";
   if (["social", "preroll"].includes(sel) && cpm < 12) msgCPM.innerText = "⚠️ Tarifa por debajo del CPM mínimo (12€)";
   if (sel === "storyteller" && cpm < 8) msgCPM.innerText = "⚠️ Tarifa por debajo del CPM mínimo (8€)";
   if (sel === "display_story" && cpm < 6) msgCPM.innerText = "⚠️ Tarifa por debajo del CPM mínimo (6€)";
@@ -281,7 +281,7 @@ function agregarPropuestaAlListado() {
       let pCesion = Math.max(pGastos * 0.30, 2500);
       tabla += `<tr><td>Gastos de producción</td><td colspan="6">Grabación de vídeo con posproducción, localización, catering, maquillaje, estilismo…</td><td>${formatNumber(pGastos)} €</td></tr>
                 <tr><td>Fee Modelo/Talent</td><td colspan="6">* Fee aproximado. El importe exacto dependerá de la talent escogida</td><td>${formatNumber(pFee)} €</td></tr>
-                <tr><td>Cesión de derechos (orgánico)</td><td colspan="6">Los materiales derivados de la producción (fotos/vídeo) podrán ser utilizados por la marca, durante un periodo de 6 meses...</td><td>${formatNumber(pCesion)} €</td></tr>`;
+                <tr><td>Cesión de derechos (orgánico)</td><td colspan="6">Los materiales derivados de la producción (fotos/vídeo) podrán ser utilizados por la marca, durante un periodo de 6 meses, en sus medios.</td><td>${formatNumber(pCesion)} €</td></tr>`;
     }
     tabla += `</tbody></table><div class="notas-pie">* Las Redes Sociales se publicarán de forma orgánica y, eventualmente, se amplificará vía paid (data afín)
 * Las Redes Sociales de los BC de marcas de bebidas alcohólicas tedrán un post orgánico en el feed de FB, segmentado a mayores de 18 años. No se publicará IG Story (META lo prohíbe). En la amplificación paid, si fuese necesario, el post se viralizará en los feed de FB e IG. Si META no lo permitiera, lo viralizaríamos vía Outbrain (audiencia más afin al soporte Hearst)</div>`;
