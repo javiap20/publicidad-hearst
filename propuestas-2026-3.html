@@ -169,7 +169,26 @@ function comprobarLimitesComerciales() {
   msgDesc.innerText = ""; msgCPM.innerText = "";
   if (sel === "bcd" && desc > 25) msgDesc.innerText = "⚠️ Excede el descuento máximo recomendado (25%)";
   if (sel === "bcd_sindicado" && desc > 40) msgDesc.innerText = "⚠️ Excede el descuento máximo recomendado (40%)";
-  if (["bcvd", "print", "social_organic"].includes(sel) && desc > 0) msgDesc.innerText = "⚠️ Excede el descuento máximo recomendado (0%)";
+
+// Límite de descuento permitido por tipo (en %)
+const limitesPorTipo = {
+  bcvd: 20,
+  print: 20,
+  social_organic: 0
+};
+
+const limite = limitesPorTipo[sel];
+if (limite !== undefined && desc > limite) {
+  // Mensaje específico por tipo
+  const etiquetas = {
+    bcvd: "BC Vídeo",
+    print: "Print",
+    social_organic: "Social Organic"
+  };
+  const etiqueta = etiquetas[sel] || sel;
+  msgDesc.innerText = `⚠️ Excede el descuento máximo recomendado para ${etiqueta} (${limite}%)`;
+}
+
   if (["social", "preroll"].includes(sel) && cpm < 12) msgCPM.innerText = "⚠️ Tarifa por debajo del CPM mínimo (12€)";
   if (sel === "storyteller" && cpm < 8) msgCPM.innerText = "⚠️ Tarifa por debajo del CPM mínimo (8€)";
   if (sel === "display_story" && cpm < 6) msgCPM.innerText = "⚠️ Tarifa por debajo del CPM mínimo (6€)";
